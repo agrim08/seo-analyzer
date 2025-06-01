@@ -6,6 +6,7 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [insights, setInsights] = useState(null);
+  const [analyzedUrl, setAnalyzedUrl] = useState("");
 
   const handleFetch = async () => {
     if (!targetUrl.trim()) return;
@@ -14,8 +15,10 @@ const Home = () => {
     setInsights(null);
 
     try {
-      const data = await seo_analyzer(targetUrl.trim());
+      const urlToAnalyze = targetUrl.trim();
+      const data = await seo_analyzer(urlToAnalyze);
       setInsights(data);
+      setAnalyzedUrl(urlToAnalyze);
       setTargetUrl("");
     } catch (err) {
       setError("Failed to fetch SEO insights.");
@@ -124,9 +127,10 @@ const Home = () => {
                   type="url"
                   placeholder="Enter website URL (e.g., https://example.com)"
                   value={targetUrl}
+                  disabled={loading}
                   onChange={(e) => setTargetUrl(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleFetch()}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm ${loading ? "cursor-not-allowed":""}`}
                 />
               </div>
               <button
@@ -135,7 +139,7 @@ const Home = () => {
                 className={`px-6 py-3 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 min-w-[120px] ${
                   loading || !targetUrl.trim()
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md"
+                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md cursor-pointer"
                 }`}
               >
                 {loading ? (
@@ -158,7 +162,7 @@ const Home = () => {
                     Analyzing
                   </>
                 ) : (
-                  <>
+                  <div className="cursor-pointer flex items-center justify-center gap-x-3">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
@@ -168,7 +172,7 @@ const Home = () => {
                       />
                     </svg>
                     Analyze SEO
-                  </>
+                  </div>
                 )}
               </button>
             </div>
@@ -193,6 +197,24 @@ const Home = () => {
 
         {insights && (
           <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+                <div>
+                  <p className="text-blue-800 text-sm font-medium">
+                    Analysis for: <span className="font-normal break-all">{analyzedUrl}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               <div className={`bg-white rounded-xl border-2 ${getScoreBg(overallScore)} p-6`}>
@@ -249,22 +271,24 @@ const Home = () => {
                     return (
                       <div
                         key={audit.id}
-                        className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
                       >
-                        <div className="flex-shrink-0 mt-0.5">{getIcon(icon, color)}</div>
+                        <div className="flex items-start gap-3 sm:gap-4 w-full">
+                          <div className="flex-shrink-0 mt-0.5">{getIcon(icon, color)}</div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-sm font-medium text-gray-900 truncate pr-4">{audit.title}</h3>
-                            <span className={getClasses(color)}>
-                              {getIcon(icon, color)}
-                              {label}
-                            </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                              <h3 className="text-sm font-medium text-gray-900 break-words pr-0 sm:pr-4">{audit.title}</h3>
+                              <span className={`${getClasses(color)} flex-shrink-0 self-start sm:self-center`}>
+                                {getIcon(icon, color)}
+                                {label}
+                              </span>
+                            </div>
+
+                            {audit.description && (
+                              <p className="text-xs text-gray-600 leading-relaxed text-left break-words">{audit.description}</p>
+                            )}
                           </div>
-
-                          {audit.description && (
-                            <p className="text-xs text-gray-600 leading-relaxed text-left">{audit.description}</p>
-                          )}
                         </div>
                       </div>
                     )
